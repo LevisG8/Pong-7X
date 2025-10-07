@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Check JS Headers</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; background:#111; color:#eee; padding:18px; }
+    input, button, textarea { font-family: monospace; font-size: 13px; }
+    textarea { width: 100%; height: 260px; margin-top:8px; white-space: pre-wrap; background:#0b0b0b; color:#cfe; padding:8px; border-radius:6px; border:1px solid #333; }
+    .row { margin-bottom:8px; }
+    .small { font-size:12px; color:#bdbdbd; }
+  </style>
+</head>
+<body>
+  <h2>Check JS / Resource Headers</h2>
+  <div class="row small">Enter the exact URL to check (example: <code>http://localhost:8000/src/main.js</code> or <code>/src/main.js</code>)</div>
+  <div class="row">
+    <input id="url" style="width:78%;" placeholder="/src/main.js" />
+    <button id="go">Fetch & Inspect</button>
+  </div>
+  <div class="row small">Results / logs:</div>
+  <textarea id="out" readonly></textarea>
+
+  <script>
+    const out = document.getElementById('out');
+    const urlInput = document.getElementById('url');
+    const go = document.getElementById('go');
+
+    function log(...args) {
+      const line = args.map(a => (typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a))).join(' ');
+      out.value += line + '\n';
+      out.scrollTop = out.scrollHeight;
+      console.log(...args);
+    }
+
+    async function inspect(url) {
+      out.value = '';
+      log('Inspecting:', url);
+      try {
+        const resp = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' });
+        log('Status:', resp.status, resp.statusText);
+        log('Response Headers:');
+        for (const [k,v] of resp.headers.entries()) log('  ' + k + ': ' + v);
+        const ct = resp.headers.get('content-type') || '';
+        const len = resp.headers.get('content-length') || '(unknown)';
+        log('Detected Content-Type:', ct);
+        log('Content-Length:', len);
+        try {
+          // attempt to read text (safe for JS/CSS); if binary, this will still attempt but may be large
+          const text = await resp.text();
+          log('--- Body snippet ---');
+          log(text.slice(0, 1200) + (text.length > 1200 ? '\n... (truncated)' : ''));
+          if (!ct.includes('javascript') && !ct.includes('text') && !ct.includes('json') && !ct.includes('css')) {
+            log('NOTE: Content-Type looks unusual for a JS module. That may break ES module imports.');
+          }
+        } catch (tErr) {
+          log('Could not read body text:', tErr.message || tErr);
+        }
+      } catch (err) {
+        log('Fetch failed:', err.message || err);
+        if (err instanceof TypeError) {
+          log('Likely CORS or network issue; ensure you served files via http(s) and server returns correct Content-Type.');
+        }
+      }
+    }
+
+    go.addEventListener('click', () => {
+      const u = urlInput.value.trim() || '/src/main.js';
+      inspect(u);
+    });
+
+    // quick-run default
+    urlInput.value = '/src/main.js';
+  </script>
+</body>
+</html>

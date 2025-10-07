@@ -1,0 +1,36 @@
+<#
+PowerShell: check_js_headers_ps1
+Usage:
+  .\check_js_headers_ps1 -Url http://localhost:8000/src/main.js
+
+This does a HEAD then a GET to capture headers and a short content snippet.
+#>
+
+param(
+  [Parameter(Mandatory=$true)]
+  [string]$Url
+)
+
+Write-Host "Checking: $Url" -ForegroundColor Cyan
+
+try {
+  $head = Invoke-WebRequest -Uri $Url -Method Head -UseBasicParsing -ErrorAction Stop
+  Write-Host "`nHEAD response:" -ForegroundColor Yellow
+  Write-Host "StatusCode: $($head.StatusCode)"
+  $head.Headers.GetEnumerator() | ForEach-Object { Write-Host ("{0,-30} : {1}" -f $_.Key, $_.Value) }
+} catch {
+  Write-Host "`nHEAD request failed: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+try {
+  $resp = Invoke-WebRequest -Uri $Url -Method Get -UseBasicParsing -ErrorAction Stop
+  Write-Host "`nGET response StatusCode: $($resp.StatusCode)" -ForegroundColor Yellow
+  $resp.Headers.GetEnumerator() | ForEach-Object { Write-Host ("{0,-30} : {1}" -f $_.Key, $_.Value) }
+  $content = $resp.Content
+  $snippet = if ($content.Length -gt 1200) { $content.Substring(0,1200) + "`n... (truncated)" } else { $content }
+  Write-Host "`n--- body snippet ---`n" -ForegroundColor Green
+  Write-Host $snippet
+} catch {
+  Write-Host "`nGET request failed: $($_.Exception.Message)" -ForegroundColor Red
+  Write-Host "If you see CORS or file:// related errors in browser, ensure you are opening via http(s) and that the server returns correct Content-Type for .js files."
+}

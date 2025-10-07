@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Ultimate Pong</title>
+  <meta name="viewport" content="width=850, user-scalable=no" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Small helper style for file:// overlay button */
+    #file-overlay-close { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <!-- Friendly check for file:// usage (ES modules require HTTP(S)).
+       If user opened index.html via file:// the overlay will instruct how to run a local server. -->
+  <script>
+    if (location.protocol === 'file:') {
+      document.addEventListener('DOMContentLoaded', () => {
+        const o = document.createElement('div');
+        o.id = 'file-protocol-overlay';
+        Object.assign(o.style, {
+          position: 'fixed', left: 0, top: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.94)', color: '#fff', zIndex: 99999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '24px', textAlign: 'center', fontFamily: 'Segoe UI, Arial, sans-serif'
+        });
+        o.innerHTML = `
+          <div style="max-width:820px">
+            <h2 style="margin-top:0;color:#ffd46b">Run a local static server to run this game</h2>
+            <p style="color:#ddd">This project uses modern ES modules which the browser blocks when opening files via <code>file://</code>. Please serve the project folder over HTTP.</p>
+            <p style="color:#ddd">Quick ways to run a server:</p>
+            <ul style="text-align:left;color:#ddd">
+              <li><strong>Python 3:</strong> open a terminal in the project folder and run <code>python -m http.server 8000</code>, then open <code>http://localhost:8000</code></li>
+              <li><strong>VS Code:</strong> install the Live Server extension and choose <em>Open with Live Server</em> on index.html</li>
+            </ul>
+            <p style="color:#ddd;margin-top:10px">If you want to continue anyway, click the button below to dismiss this message (the app still requires a server to work properly).</p>
+            <p style="margin-top:12px">
+              <button id="file-overlay-close" style="padding:10px 16px;border-radius:8px;border:none;background:#43e97b;color:#111;font-weight:700">I understand — show page</button>
+            </p>
+          </div>`;
+        document.body.appendChild(o);
+        document.getElementById('file-overlay-close').onclick = () => {
+          try { o.remove(); } catch (e) {}
+        };
+      });
+    }
+  </script>
+
+  <h1>Ultimate Pong</h1>
+
+  <canvas id="pong" width="800" height="500" tabindex="1"></canvas>
+
+  <div id="overlay" class="overlay">
+    <div id="overlay-content">
+      <h2 id="overlay-title">Ultimate Pong</h2>
+      <p id="overlay-desc">
+        <b>Controls:</b><br />
+        <span style="color:#43e97b">Mouse</span>: Move paddle<br />
+        <span style="color:#43e97b">Touch</span>: Drag paddle / joystick<br />
+        <span style="color:#43e97b">Keyboard</span>: W/S or ↑/↓<br />
+        <span style="color:#43e97b">Tab</span>: Local Multiplayer<br />
+        <span style="color:#43e97b">C</span>: Change Skins<br />
+        <span style="color:#43e97b">O</span>: Settings<br />
+        <span style="color:#43e97b">P/Esc</span>: Pause<br />
+        <span style="color:#43e97b">R</span>: Replay<br />
+        <span style="color:#43e97b">?</span>: Tutorial<br />
+        <br /><span style="color:#aaa;font-size:0.98em">First to 7 wins!</span>
+      </p>
+      <button id="overlay-btn">Start Game</button>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
